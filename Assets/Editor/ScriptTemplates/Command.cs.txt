@@ -1,0 +1,12 @@
+using QFramework;
+
+namespace DarkSoulsLike
+{
+    public class #NAME# : AbstractCommand
+    {
+        protected override void OnExecute()
+        {
+            //TODO
+        }
+    }
+}

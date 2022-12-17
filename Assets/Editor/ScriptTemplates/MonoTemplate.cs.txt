@@ -1,0 +1,9 @@
+using UnityEngine;
+
+namespace DarkSoulsLike
+{
+    public class #NAME# : MonoBehaviour
+    {
+        
+    }
+}

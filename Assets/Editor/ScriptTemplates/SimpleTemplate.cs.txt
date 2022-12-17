@@ -1,0 +1,9 @@
+using QFramework;
+
+namespace DarkSoulsLike
+{
+    public class #NAME#
+    {
+        
+    }
+}
