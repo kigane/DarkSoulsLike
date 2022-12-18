@@ -5,8 +5,8 @@ namespace DarkSoulsLike
     public class AnimatorHandler : MonoBehaviour
     {
         public Animator anim;
-        int vertical;
-        int horizontal;
+        private int vertical;
+        private int horizontal;
         public bool canRotate;
 
         public void Initialize()

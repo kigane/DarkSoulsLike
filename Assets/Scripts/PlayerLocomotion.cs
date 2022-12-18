@@ -4,9 +4,9 @@ namespace DarkSoulsLike
 {
     public class PlayerLocomotion : MonoBehaviour
     {
-        Transform cameraTransform;
-        InputHandler inputHandler;
-        Vector3 moveDirection;
+        private Transform cameraTransform;
+        private InputHandler inputHandler;
+        private Vector3 moveDirection;
 
         [HideInInspector]
         public Transform myTransform;
@@ -19,9 +19,9 @@ namespace DarkSoulsLike
 
         [Header("Stats")]
         [SerializeField]
-        float movementSpeed = 5f;
+        private float movementSpeed = 5f;
         [SerializeField]
-        float rotationSpeed = 10f;
+        private float rotationSpeed = 10f;
 
         private void Start()
         {
@@ -45,6 +45,8 @@ namespace DarkSoulsLike
             moveDirection.Normalize();
 
             float speed = movementSpeed;
+            if (Mathf.Abs(inputHandler.moveAmount) < 0.55f)
+                moveDirection /= 2;
             moveDirection *= speed;
 
             Vector3 projectedVelocity = Vector3.ProjectOnPlane(moveDirection, normalVector);
@@ -63,17 +65,20 @@ namespace DarkSoulsLike
         }
 
         #region Movement
-        Vector3 normalVector;
-        Vector3 targetPosition;
+        private Vector3 normalVector = Vector3.up;
+        private Vector3 targetPosition;
 
         /// <summary>
         /// 人物转向
+        /// 1.将输入信号转为方向向量 
+        /// 2.转为旋转角度 Quaternion.LookRotation
+        /// 3.让人物逐渐跟随到旋转角度 Quaternion.Slerp
         /// </summary>
         /// <param name="delta"></param>
         private void HandleRotation(float delta)
         {
-            Vector3 targetDir = Vector3.zero;
-            float moveOverride = inputHandler.moveAmount;
+            Vector3 targetDir;
+            // float moveOverride = inputHandler.moveAmount;
 
             targetDir = cameraTransform.forward * inputHandler.vertical;
             targetDir += cameraTransform.right * inputHandler.horizontal;
@@ -86,14 +91,9 @@ namespace DarkSoulsLike
                 targetDir = myTransform.forward;
 
             float rs = rotationSpeed;
-
             Quaternion tr = Quaternion.LookRotation(targetDir);
             Quaternion targetRotation = Quaternion.Slerp(myTransform.rotation, tr, rs * delta);
-
             myTransform.rotation = targetRotation;
-
-            // hello
-
         }
         #endregion
 
