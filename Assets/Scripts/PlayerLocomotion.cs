@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DarkSoulsLike
 {
@@ -22,7 +23,7 @@ namespace DarkSoulsLike
         [SerializeField]
         private float rotationSpeed = 10f;
 
-        // public bool isSprinting;
+        public bool canRoll = true;
 
         private void Start()
         {
@@ -32,16 +33,6 @@ namespace DarkSoulsLike
             cameraTransform = Camera.main.transform;
             myTransform = transform;
             animatorHandler.Initialize();
-        }
-
-        private void Update()
-        {
-            float delta = Time.deltaTime;
-
-            // isSprinting = inputHandler.b_input;
-            inputHandler.TickInput(delta);
-            HandleMovement(delta);
-            HandleRollingAndSprinting(delta);
         }
 
         #region Movement
@@ -76,7 +67,7 @@ namespace DarkSoulsLike
             myTransform.rotation = targetRotation;
         }
 
-        private void HandleMovement(float delta)
+        public void HandleMovement(float delta)
         {
             // 翻滚时不能移动
             if (inputHandler.rollFlag)
@@ -111,14 +102,17 @@ namespace DarkSoulsLike
             }
         }
 
-        private void HandleRollingAndSprinting(float delta)
+        public void HandleRollingAndSprinting(float delta)
         {
             if (animatorHandler.anim.GetBool("isInteracting"))
                 return;
 
-            if (inputHandler.rollFlag)
+            if (inputHandler.rollFlag && canRoll)
             {
-                inputHandler.rollFlag = false;
+                // 翻滚时，rollFlag = true, canRoll = false
+                // 结束时, rollFlag = false, canRoll = true
+                // 这样在翻滚中，再次输入翻滚不会被记录。因此，连续翻滚必须在一次翻滚结束后再次输入。
+                canRoll = false;
                 moveDirection = cameraTransform.forward * inputHandler.vertical;
                 moveDirection += cameraTransform.right * inputHandler.horizontal;
 
@@ -134,6 +128,13 @@ namespace DarkSoulsLike
                     animatorHandler.PlayTargetAnimation("Backflip", true);
                 }
             }
+        }
+
+        // 在翻滚相关动画的最后一帧的动画事件中被调用
+        public void ResetRollFlags()
+        {
+            canRoll = true;
+            inputHandler.rollFlag = false;
         }
         #endregion
 

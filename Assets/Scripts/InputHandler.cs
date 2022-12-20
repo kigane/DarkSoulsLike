@@ -17,29 +17,11 @@ namespace DarkSoulsLike
         public bool rollFlag;
         public bool sprintFlag;
         public float rollInputTimer;
-        public bool isInteracting;
 
         private PlayerControls inputActions;
-        private CameraHandler cameraHandler;
 
         private Vector2 movementInput;
         private Vector2 cameraInput;
-
-        private void Awake()
-        {
-            cameraHandler = CameraHandler.singleton;
-        }
-
-        private void FixedUpdate()
-        {
-            float delta = Time.fixedDeltaTime;
-
-            if (cameraHandler != null)
-            {
-                cameraHandler.FollowTarget(delta);
-                cameraHandler.HandleCameraRotation(delta, mouseX, mouseY);
-            }
-        }
 
         private void OnEnable()
         {
@@ -76,31 +58,5 @@ namespace DarkSoulsLike
             mouseX = cameraInput.x;
             mouseY = cameraInput.y;
         }
-
-        // private void HandleRollInput(float delta)
-        // {
-        //     b_input = inputActions.PlayerActions.Roll.phase == UnityEngine.InputSystem.InputActionPhase.Performed;
-
-        //     // Log.Debug("B: " + b_input);
-        //     // press只有waiting和performed两种状态
-        //     // tap只有waiting和stared两种状态
-        //     Log.Debug(inputActions.PlayerActions.Roll.phase);
-
-        //     if (b_input) // 点按翻滚，长按冲刺
-        //     {
-        //         rollInputTimer += delta;
-        //         sprintFlag = true;
-        //     }
-        //     else
-        //     {
-        //         if (rollInputTimer > 0 && rollInputTimer < 0.5f)
-        //         {
-        //             sprintFlag = false;
-        //             rollFlag = true;
-        //         }
-
-        //         rollInputTimer = 0;
-        //     }
-        // }
     }
 }
