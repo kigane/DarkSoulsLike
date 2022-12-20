@@ -7,11 +7,8 @@ namespace DarkSoulsLike
         private Transform cameraTransform;
         private InputHandler inputHandler;
         private Vector3 moveDirection;
-
-        [HideInInspector]
-        public Transform myTransform;
-        [HideInInspector]
-        public AnimatorHandler animatorHandler;
+        private Transform myTransform;
+        private AnimatorHandler animatorHandler;
 
         // 这里new关键字表示显式隐藏基类的同名成员。
         public new Rigidbody rigidbody;
@@ -22,6 +19,8 @@ namespace DarkSoulsLike
         private float movementSpeed = 5f;
         [SerializeField]
         private float rotationSpeed = 10f;
+
+        public bool isSprinting;
 
         private void Start()
         {
@@ -38,30 +37,8 @@ namespace DarkSoulsLike
             float delta = Time.deltaTime;
 
             inputHandler.TickInput(delta);
-
-            // 根据相机朝向和输入移动人物
-            moveDirection = cameraTransform.forward * inputHandler.vertical;
-            moveDirection += cameraTransform.right * inputHandler.horizontal;
-            moveDirection.Normalize();
-
-            float speed = movementSpeed;
-            if (Mathf.Abs(inputHandler.moveAmount) < 0.55f)
-                moveDirection /= 2;
-            moveDirection *= speed;
-
-            Vector3 projectedVelocity = Vector3.ProjectOnPlane(moveDirection, normalVector);
-
-            // Log.Debug("Projected Velocity: " + projectedVelocity);
-            // Log.Debug("NormalVector: " + normalVector);
-
-            rigidbody.velocity = projectedVelocity;
-
-            animatorHandler.UpdateAnimatorValues(inputHandler.moveAmount, 0);
-
-            if (animatorHandler.canRotate)
-            {
-                HandleRotation(delta);
-            }
+            HandleMovement(delta);
+            HandleRollingAndSprinting(delta);
         }
 
         #region Movement
@@ -94,6 +71,54 @@ namespace DarkSoulsLike
             Quaternion tr = Quaternion.LookRotation(targetDir);
             Quaternion targetRotation = Quaternion.Slerp(myTransform.rotation, tr, rs * delta);
             myTransform.rotation = targetRotation;
+        }
+
+        private void HandleMovement(float delta)
+        {
+            // 根据相机朝向和输入移动人物
+            moveDirection = cameraTransform.forward * inputHandler.vertical;
+            moveDirection += cameraTransform.right * inputHandler.horizontal;
+            moveDirection.Normalize();
+
+            float speed = movementSpeed;
+            if (Mathf.Abs(inputHandler.moveAmount) < 0.55f)
+                moveDirection /= 2;
+            moveDirection *= speed;
+
+            Vector3 projectedVelocity = Vector3.ProjectOnPlane(moveDirection, normalVector);
+
+            rigidbody.velocity = projectedVelocity;
+
+            animatorHandler.UpdateAnimatorValues(inputHandler.moveAmount, 0, isSprinting);
+
+            if (animatorHandler.canRotate)
+            {
+                HandleRotation(delta);
+            }
+        }
+
+        private void HandleRollingAndSprinting(float delta)
+        {
+            if (animatorHandler.anim.GetBool("isInteracting"))
+                return;
+
+            if (inputHandler.rollFlag)
+            {
+                moveDirection = cameraTransform.forward * inputHandler.vertical;
+                moveDirection += cameraTransform.right * inputHandler.horizontal;
+
+                if (inputHandler.moveAmount > 0)
+                {
+                    animatorHandler.PlayTargetAnimation("Roll", true);
+                    moveDirection.y = 0;
+                    Quaternion rollRotation = Quaternion.LookRotation(moveDirection);
+                    myTransform.rotation = rollRotation;
+                }
+                else
+                {
+                    animatorHandler.PlayTargetAnimation("Backflip", true);
+                }
+            }
         }
         #endregion
 

@@ -11,6 +11,12 @@ namespace DarkSoulsLike
         public float mouseX;
         public float mouseY;
 
+        public bool b_input;
+        public bool rollFlag;
+        public bool sprintFlag;
+        public float rollInputTimer;
+        public bool isInteracting;
+
         private PlayerControls inputActions;
         private CameraHandler cameraHandler;
 
@@ -31,7 +37,6 @@ namespace DarkSoulsLike
                 cameraHandler.FollowTarget(delta);
                 cameraHandler.HandleCameraRotation(delta, mouseX, mouseY);
             }
-
         }
 
         private void OnEnable()
@@ -39,8 +44,8 @@ namespace DarkSoulsLike
             if (inputActions == null)
             {
                 inputActions = new PlayerControls();
-                inputActions.Player.Move.performed += inputAction => movementInput = inputAction.ReadValue<Vector2>();
-                inputActions.Player.Camera.performed += inputAction => cameraInput = inputAction.ReadValue<Vector2>();
+                inputActions.PlayerMovement.Move.performed += inputAction => movementInput = inputAction.ReadValue<Vector2>();
+                inputActions.PlayerMovement.Camera.performed += inputAction => cameraInput = inputAction.ReadValue<Vector2>();
             }
 
             inputActions.Enable();
@@ -54,15 +59,40 @@ namespace DarkSoulsLike
         public void TickInput(float delta)
         {
             MoveInput(delta);
+            HandleRollInput(delta);
         }
 
-        public void MoveInput(float delta)
+        private void MoveInput(float delta)
         {
             horizontal = movementInput.x;
             vertical = movementInput.y;
             moveAmount = Mathf.Clamp01(Mathf.Abs(horizontal) + Mathf.Abs(vertical));
             mouseX = cameraInput.x;
             mouseY = cameraInput.y;
+        }
+
+        private void HandleRollInput(float delta)
+        {
+            b_input = inputActions.PlayerActions.Roll.phase == UnityEngine.InputSystem.InputActionPhase.Performed;
+
+            // Log.Debug("B: " + b_input);
+            // Log.Debug(inputActions.PlayerActions.Roll.phase); // 只有waiting和performed两种状态
+
+            if (b_input)
+            {
+                rollInputTimer += delta;
+                rollFlag = true;
+            }
+            else
+            {
+                if (rollInputTimer > 0 && rollInputTimer < 0.5f)
+                {
+                    sprintFlag = false;
+                    rollFlag = true;
+                }
+
+                rollInputTimer = 0;
+            }
         }
     }
 }
