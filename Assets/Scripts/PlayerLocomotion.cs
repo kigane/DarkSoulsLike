@@ -18,9 +18,11 @@ namespace DarkSoulsLike
         [SerializeField]
         private float movementSpeed = 5f;
         [SerializeField]
+        private float sprintSpeed = 7f;
+        [SerializeField]
         private float rotationSpeed = 10f;
 
-        public bool isSprinting;
+        // public bool isSprinting;
 
         private void Start()
         {
@@ -36,6 +38,7 @@ namespace DarkSoulsLike
         {
             float delta = Time.deltaTime;
 
+            // isSprinting = inputHandler.b_input;
             inputHandler.TickInput(delta);
             HandleMovement(delta);
             HandleRollingAndSprinting(delta);
@@ -75,21 +78,32 @@ namespace DarkSoulsLike
 
         private void HandleMovement(float delta)
         {
+            // 翻滚时不能移动
+            if (inputHandler.rollFlag)
+                return;
+
             // 根据相机朝向和输入移动人物
             moveDirection = cameraTransform.forward * inputHandler.vertical;
             moveDirection += cameraTransform.right * inputHandler.horizontal;
             moveDirection.Normalize();
 
             float speed = movementSpeed;
-            if (Mathf.Abs(inputHandler.moveAmount) < 0.55f)
+            if (inputHandler.sprintFlag)
+            {
+                speed = sprintSpeed;
+                // isSprinting = true;
+            }
+            else if (Mathf.Abs(inputHandler.moveAmount) < 0.55f)
+            {
                 moveDirection /= 2;
+            }
             moveDirection *= speed;
 
             Vector3 projectedVelocity = Vector3.ProjectOnPlane(moveDirection, normalVector);
 
             rigidbody.velocity = projectedVelocity;
 
-            animatorHandler.UpdateAnimatorValues(inputHandler.moveAmount, 0, isSprinting);
+            animatorHandler.UpdateAnimatorValues(inputHandler.moveAmount, 0, inputHandler.sprintFlag);
 
             if (animatorHandler.canRotate)
             {
@@ -104,6 +118,7 @@ namespace DarkSoulsLike
 
             if (inputHandler.rollFlag)
             {
+                inputHandler.rollFlag = false;
                 moveDirection = cameraTransform.forward * inputHandler.vertical;
                 moveDirection += cameraTransform.right * inputHandler.horizontal;
 

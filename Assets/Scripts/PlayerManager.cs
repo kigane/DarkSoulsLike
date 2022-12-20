@@ -16,8 +16,9 @@ namespace DarkSoulsLike
         void Update()
         {
             inputHandler.isInteracting = anim.GetBool("isInteracting");
-            Log.Debug("PlayerManager-isInteracting: " + inputHandler.isInteracting);
-            inputHandler.rollFlag = false;
+            // Log.Debug("PlayerManager-isInteracting: " + inputHandler.isInteracting);
+            // inputHandler.rollFlag = false;
+            // inputHandler.sprintFlag = false;
         }
     }
 }

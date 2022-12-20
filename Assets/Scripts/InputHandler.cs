@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace DarkSoulsLike
 {
@@ -30,7 +32,7 @@ namespace DarkSoulsLike
 
         private void FixedUpdate()
         {
-            float delta = Time.deltaTime;
+            float delta = Time.fixedDeltaTime;
 
             if (cameraHandler != null)
             {
@@ -49,6 +51,10 @@ namespace DarkSoulsLike
             }
 
             inputActions.Enable();
+            inputActions.PlayerActions.Enable();
+            inputActions.PlayerActions.Roll.performed += ctx => rollFlag = true;
+            inputActions.PlayerActions.Sprint.performed += ctx => sprintFlag = true;
+            inputActions.PlayerActions.Sprint.canceled += ctx => sprintFlag = false;
         }
 
         private void OnDisable()
@@ -59,7 +65,7 @@ namespace DarkSoulsLike
         public void TickInput(float delta)
         {
             MoveInput(delta);
-            HandleRollInput(delta);
+            // HandleRollInput(delta);
         }
 
         private void MoveInput(float delta)
@@ -71,28 +77,30 @@ namespace DarkSoulsLike
             mouseY = cameraInput.y;
         }
 
-        private void HandleRollInput(float delta)
-        {
-            b_input = inputActions.PlayerActions.Roll.phase == UnityEngine.InputSystem.InputActionPhase.Performed;
+        // private void HandleRollInput(float delta)
+        // {
+        //     b_input = inputActions.PlayerActions.Roll.phase == UnityEngine.InputSystem.InputActionPhase.Performed;
 
-            // Log.Debug("B: " + b_input);
-            // Log.Debug(inputActions.PlayerActions.Roll.phase); // 只有waiting和performed两种状态
+        //     // Log.Debug("B: " + b_input);
+        //     // press只有waiting和performed两种状态
+        //     // tap只有waiting和stared两种状态
+        //     Log.Debug(inputActions.PlayerActions.Roll.phase);
 
-            if (b_input)
-            {
-                rollInputTimer += delta;
-                rollFlag = true;
-            }
-            else
-            {
-                if (rollInputTimer > 0 && rollInputTimer < 0.5f)
-                {
-                    sprintFlag = false;
-                    rollFlag = true;
-                }
+        //     if (b_input) // 点按翻滚，长按冲刺
+        //     {
+        //         rollInputTimer += delta;
+        //         sprintFlag = true;
+        //     }
+        //     else
+        //     {
+        //         if (rollInputTimer > 0 && rollInputTimer < 0.5f)
+        //         {
+        //             sprintFlag = false;
+        //             rollFlag = true;
+        //         }
 
-                rollInputTimer = 0;
-            }
-        }
+        //         rollInputTimer = 0;
+        //     }
+        // }
     }
 }

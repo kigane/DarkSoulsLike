@@ -149,7 +149,16 @@ namespace DarkSoulsLike
                     ""id"": ""0c6c0f8f-7faa-426c-b261-0406543c1993"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
-                    ""interactions"": """",
+                    ""interactions"": ""Tap(duration=0.5)"",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Sprint"",
+                    ""type"": ""Button"",
+                    ""id"": ""7f95d352-61c2-4234-bc6d-f15d27b7ade7"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": ""Hold(duration=0.5)"",
                     ""initialStateCheck"": false
                 }
             ],
@@ -175,6 +184,28 @@ namespace DarkSoulsLike
                     ""action"": ""Roll"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0561a68b-df3d-4efb-ab61-67d5ca30a883"",
+                    ""path"": ""<Gamepad>/buttonEast"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Sprint"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d5442c1f-5062-4d0a-8f29-3cc673bfd072"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Sprint"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -188,6 +219,7 @@ namespace DarkSoulsLike
             // PlayerActions
             m_PlayerActions = asset.FindActionMap("PlayerActions", throwIfNotFound: true);
             m_PlayerActions_Roll = m_PlayerActions.FindAction("Roll", throwIfNotFound: true);
+            m_PlayerActions_Sprint = m_PlayerActions.FindAction("Sprint", throwIfNotFound: true);
         }
 
         public void Dispose()
@@ -289,11 +321,13 @@ namespace DarkSoulsLike
         private readonly InputActionMap m_PlayerActions;
         private IPlayerActionsActions m_PlayerActionsActionsCallbackInterface;
         private readonly InputAction m_PlayerActions_Roll;
+        private readonly InputAction m_PlayerActions_Sprint;
         public struct PlayerActionsActions
         {
             private @PlayerControls m_Wrapper;
             public PlayerActionsActions(@PlayerControls wrapper) { m_Wrapper = wrapper; }
             public InputAction @Roll => m_Wrapper.m_PlayerActions_Roll;
+            public InputAction @Sprint => m_Wrapper.m_PlayerActions_Sprint;
             public InputActionMap Get() { return m_Wrapper.m_PlayerActions; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -306,6 +340,9 @@ namespace DarkSoulsLike
                     @Roll.started -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnRoll;
                     @Roll.performed -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnRoll;
                     @Roll.canceled -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnRoll;
+                    @Sprint.started -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnSprint;
+                    @Sprint.performed -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnSprint;
+                    @Sprint.canceled -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnSprint;
                 }
                 m_Wrapper.m_PlayerActionsActionsCallbackInterface = instance;
                 if (instance != null)
@@ -313,6 +350,9 @@ namespace DarkSoulsLike
                     @Roll.started += instance.OnRoll;
                     @Roll.performed += instance.OnRoll;
                     @Roll.canceled += instance.OnRoll;
+                    @Sprint.started += instance.OnSprint;
+                    @Sprint.performed += instance.OnSprint;
+                    @Sprint.canceled += instance.OnSprint;
                 }
             }
         }
@@ -325,6 +365,7 @@ namespace DarkSoulsLike
         public interface IPlayerActionsActions
         {
             void OnRoll(InputAction.CallbackContext context);
+            void OnSprint(InputAction.CallbackContext context);
         }
     }
 }
