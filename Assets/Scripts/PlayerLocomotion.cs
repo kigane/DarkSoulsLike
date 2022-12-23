@@ -7,13 +7,24 @@ namespace DarkSoulsLike
     {
         private Transform cameraTransform;
         private InputHandler inputHandler;
-        private Vector3 moveDirection;
         private Transform myTransform;
         private AnimatorHandler animatorHandler;
+        private PlayerManager playerManager;
 
+        public Vector3 moveDirection;
         // 这里new关键字表示显式隐藏基类的同名成员。
         public new Rigidbody rigidbody;
         public GameObject normalCamera;
+
+        [Header("Ground & Air Detection Stats")]
+        [SerializeField]
+        private float groundDetectionRayStartPoint = 0.5f; // coll的底部坐标
+        [SerializeField]
+        private float minimumDetectionNeededToFall = 1.2f; // 大于此值才为掉落，否则为平地或下滑
+        [SerializeField]
+        private float groundDetectionRayDistance = 0.1f; // 探测移动方向前方此距离是否掉落
+        private LayerMask ignoreForGroundCheck;
+        public float inAirTimer;
 
         [Header("Stats")]
         [SerializeField]
@@ -22,6 +33,8 @@ namespace DarkSoulsLike
         private float sprintSpeed = 7f;
         [SerializeField]
         private float rotationSpeed = 10f;
+        [SerializeField]
+        private float fallingSpeed = 80f;
 
         public bool canRoll = true;
 
@@ -29,10 +42,15 @@ namespace DarkSoulsLike
         {
             rigidbody = GetComponent<Rigidbody>();
             inputHandler = GetComponent<InputHandler>();
+            playerManager = GetComponent<PlayerManager>();
             animatorHandler = GetComponentInChildren<AnimatorHandler>();
             cameraTransform = Camera.main.transform;
             myTransform = transform;
+
             animatorHandler.Initialize();
+
+            playerManager.isGrounded = true;
+            ignoreForGroundCheck = ~(1 << 8 | 1 << 10);
         }
 
         #region Movement
@@ -72,6 +90,13 @@ namespace DarkSoulsLike
             // 翻滚时不能移动
             if (inputHandler.rollFlag)
                 return;
+            // 理论上开始下坠后playerManager.isInteracting为true，rigidbody.velocity为下落时设定的值
+            // 实际上，上楼梯时，从左右掉落，则rigidbody会和楼梯的coll重叠，导致rigidbody不断将其速度改为0。
+            // 因此，上楼梯时掉落，会在边缘卡住。
+            Log.Debug("Movement: " + rigidbody.velocity);
+            // Log.Debug("isInteracting: " + playerManager.isInteracting);
+            if (playerManager.isInteracting)
+                return;
 
             // 根据相机朝向和输入移动人物
             moveDirection = cameraTransform.forward * inputHandler.vertical;
@@ -91,7 +116,7 @@ namespace DarkSoulsLike
             moveDirection *= speed;
 
             Vector3 projectedVelocity = Vector3.ProjectOnPlane(moveDirection, normalVector);
-
+            // Log.Debug("Projected Velocity: " + projectedVelocity);
             rigidbody.velocity = projectedVelocity;
 
             animatorHandler.UpdateAnimatorValues(inputHandler.moveAmount, 0, inputHandler.sprintFlag);
@@ -135,6 +160,94 @@ namespace DarkSoulsLike
         {
             canRoll = true;
             inputHandler.rollFlag = false;
+        }
+
+        public void HandleFalling(float delta, Vector3 moveDirection)
+        {
+            playerManager.isGrounded = false;
+
+            // 射线起点在coll底部
+            Vector3 origin = myTransform.position;
+            origin.y += groundDetectionRayStartPoint;
+
+            if (Physics.Raycast(origin, myTransform.forward, out _, 0.4f))
+            { // 检测前方障碍物。
+                moveDirection = Vector3.zero;
+            }
+
+            if (playerManager.isInAir)
+            { // 已经在空中了
+                rigidbody.AddForce(-Vector3.up * fallingSpeed);
+                rigidbody.AddForce(moveDirection * fallingSpeed / 5f);
+            }
+
+
+            // 射线向移动方向偏移
+            origin += moveDirection.normalized * groundDetectionRayDistance;
+
+            targetPosition = myTransform.position;
+
+            Debug.DrawRay(origin, -Vector3.up * minimumDetectionNeededToFall, Color.red, 0.1f, false);
+
+            if (Physics.Raycast(origin, -Vector3.up, out RaycastHit hit, minimumDetectionNeededToFall, ignoreForGroundCheck))
+            { // 离地面很近(着陆，正常移动)
+                normalVector = hit.normal;
+                Vector3 tp = hit.point;
+                DebugTool.DebugPoint.transform.position = hit.point;
+                // Log.Debug(hit.transform.gameObject.name);// 和自己(DebugPoint)碰撞导致人物一直向上升, 2333
+
+                playerManager.isGrounded = true;
+                targetPosition.y = tp.y;
+
+                if (playerManager.isInAir)
+                { // 着陆
+                    if (inAirTimer > 0.5f)
+                    {
+                        Log.Debug("你滞空 " + inAirTimer + " 秒了");
+                        animatorHandler.PlayTargetAnimation("Land", true);
+                    }
+                    else
+                    {
+                        animatorHandler.PlayTargetAnimation("Locomotion", false);
+                    }
+
+                    playerManager.isInAir = false;
+                    inAirTimer = 0;
+                }
+            }
+            else
+            { // 在空中
+                if (playerManager.isGrounded)
+                {
+                    playerManager.isGrounded = false;
+                }
+
+                if (playerManager.isInAir == false)
+                {
+                    if (playerManager.isInteracting == false)
+                    {
+                        animatorHandler.PlayTargetAnimation("Falling", true);
+                    }
+
+                    Vector3 vel = rigidbody.velocity;
+                    vel.Normalize();
+                    rigidbody.velocity = vel * (movementSpeed / 2);
+                    // Log.Debug("Rig v: " + rigidbody.velocity);
+                    playerManager.isInAir = true;
+                }
+            }
+
+            if (playerManager.isGrounded)
+            {
+                if (playerManager.isInteracting || inputHandler.moveAmount > 0)
+                {
+                    myTransform.position = Vector3.Lerp(myTransform.position, targetPosition, delta * 5f);
+                }
+                else
+                {
+                    myTransform.position = targetPosition;
+                }
+            }
         }
         #endregion
 

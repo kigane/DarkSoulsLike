@@ -24,7 +24,7 @@ namespace DarkSoulsLike
             AddAnimationEvent("Roll", "ResetRollFlags", 1f);
             AddAnimationEvent("Backflip", "ResetRollFlags", 0.8f);
             AddAnimationEvent("Backflip", "PlaySpeedUp", 0.4f);
-            AddAnimationEvent("Backflip", "ResetSpeed", 0f);
+            AddAnimationEvent("Backflip", "SetPlaySpeed", 0f);
         }
 
         public void UpdateAnimatorValues(float verticalMovement, float horizontalMovement, bool isSprinting)
@@ -144,7 +144,7 @@ namespace DarkSoulsLike
             anim.SetFloat("BackflipSpeed", 2f);
         }
 
-        private void ResetSpeed()
+        private void SetPlaySpeed()
         {
             anim.SetFloat("BackflipSpeed", 1.6f);
         }

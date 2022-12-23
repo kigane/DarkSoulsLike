@@ -13,6 +13,8 @@ namespace DarkSoulsLike
 
         [Header("Player Flags")]
         public bool isInteracting;
+        public bool isInAir;
+        public bool isGrounded;
 
         void Start()
         {
@@ -29,6 +31,7 @@ namespace DarkSoulsLike
             inputHandler.TickInput(delta);
             playerLocomotion.HandleMovement(delta);
             playerLocomotion.HandleRollingAndSprinting(delta);
+            playerLocomotion.HandleFalling(delta, playerLocomotion.moveDirection);
         }
 
         private void FixedUpdate()
@@ -47,6 +50,11 @@ namespace DarkSoulsLike
         {
             isInteracting = anim.GetBool("isInteracting");
             // Log.Debug("PlayerManager-isInteracting: " + inputHandler.isInteracting);
+
+            if (isInAir)
+            {
+                playerLocomotion.inAirTimer += Time.deltaTime;
+            }
         }
     }
 }
